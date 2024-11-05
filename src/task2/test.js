@@ -1,38 +1,37 @@
 import { assert, report } from "../common/test_lib.js";
-import { createSignal, createMemo, createEffect, isReactive } from "../reactive_lib.js";
+import { Signal, Effect, isReactive } from "../reactive_lib.js";
 
-const [read, write] = createSignal(42);
+const signal = new Signal(42);
 
-assert(read() === 42, "Initial signal value");
-write(69);
-assert(read() === 69, "Updating signal");
+assert(signal.value === 42, "Initial signal value");
+signal.value = 69;
+assert(signal.value === 69, "Updating signal");
 
-const memo = createMemo(() => read());
-assert(memo() === 69, "Initial memo value");
-write(42);
-assert(memo() === 42, "Signal update causes memo update");
+const memo = new Effect(() => signal.value);
+assert(memo.value === 69, "Initial memo value");
+signal.value = 42;
+assert(memo.value === 42, "Signal update causes memo update");
 
-write(0);
-const memo2 = createMemo(() => memo() + memo());
-write(42);
-assert(memo2() === 84, "Memo using another memo works ");
+signal.value = 0;
+const memo2 = new Effect(() => memo.value + memo.value);
+signal.value = 42;
+assert(memo2.value === 84, "Memo using another memo works ");
 
 let effect_test = ':(';
-createEffect(() => { effect_test = read() });
+new Effect(() => { effect_test = signal.value });
 assert(effect_test === 42, "Effect initial run");
 
-write(69);
+signal.value = 69;
 assert(effect_test === 69, "Effect run on update");
 
 let effect_test2 = ':(';
-createEffect(() => { effect_test2 = memo() * read() });
+new Effect(() => { effect_test2 = memo.value * signal.value });
 
-write(2);
+signal.value = 2;
 
 assert(effect_test2 === 4, "Effect with memo dependecy runs");
 
-assert(isReactive(read), "Read signal recognized as reactive");
-assert(isReactive(write), "Write signal recognized as reactive");
+assert(isReactive(signal), "Signal recognized as reactive");
 assert(isReactive(memo), "Memo recognized as reactive");
 
 report();

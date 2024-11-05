@@ -1,105 +1,104 @@
 import { assert, report } from "../common/test_lib.js";
-import { createSignal, createMemo, createEffect, isReactive } from "../reactive_lib.js";
+import { Signal, Effect, isReactive } from "../reactive_lib.js";
 
-const [read, write] = createSignal(42);
+const signal1 = new Signal(42);
 
-assert(read() === 42, "Initial signal value");
-write(69);
-assert(read() === 69, "Updating signal");
+assert(signal1.value === 42, "Initial signal value");
+signal1.value = 69;
+assert(signal1.value === 69, "Updating signal");
 
-const memo = createMemo(() => read());
-assert(memo() === 69, "Initial memo value");
-write(42);
-assert(memo() === 42, "Signal update causes memo update");
+const memo = new Effect(() => signal1.value);
+assert(memo.value === 69, "Initial memo value");
+signal1.value = 42;
+assert(memo.value === 42, "Signal update causes memo update");
 
-write(0);
-const memo2 = createMemo(() => memo() + memo());
-write(42);
-assert(memo2() === 84, "Memo using another memo works ");
+signal1.value = 0;
+const memo2 = new Effect(() => memo.value + memo.value);
+signal1.value = 42;
+assert(memo2.value === 84, "Memo using another memo works ");
 
 let effect_test = ':(';
-createEffect(() => { effect_test = read() });
+new Effect(() => { effect_test = signal1.value });
 assert(effect_test === 42, "Effect initial run");
 
-write(69);
+signal1.value = 69;
 assert(effect_test === 69, "Effect run on update");
 
 let effect_test2 = ':(';
-createEffect(() => { effect_test2 = memo() * read() });
+new Effect(() => { effect_test2 = memo.value * signal1.value });
 
-write(2);
+signal1.value = 2;
 
 assert(effect_test2 === 4, "Effect with memo dependecy runs");
 
-assert(isReactive(read), "Read signal recognized as reactive");
-assert(isReactive(write), "Write signal recognized as reactive");
+assert(isReactive(signal1), "Signal recognized as reactive");
 assert(isReactive(memo), "Memo recognized as reactive");
 
-const [firstName, setFirstName] = createSignal("Bob");
-const [lastName, setLastName] = createSignal("Sanchez");
+const firstName = new Signal("Bob");
+const lastName = new Signal("Sanchez");
 
-const fullName = createMemo( () => firstName() + " " + lastName());
+const fullName = new Effect( () => firstName.value + " " + lastName.value);
 
 let count = 0;
 const print = (_) => { count += 1; };
-createEffect( () => { print (firstName() + "(" + fullName() + ")"); });
+new Effect( () => { print (firstName.value + "(" + fullName.value + ")"); });
 
 count = 0;
-setFirstName("Carlos");
+firstName.value = "Carlos";
 assert(count === 1, "Effect only evaluated once");
 
 let count2 = 0;
 const print2 = (_, i) => { count2 = i; };
 
-const [guard, setGuard] = createSignal(true);
+const guard = new Signal(true);
 
-createEffect( () => { if (guard()) {
-        print2(firstName(), 10);
+new Effect( () => { if (guard.value) {
+        print2(firstName.value, 10);
     } else {
-        print2(lastName(), 1);
+        print2(lastName.value, 1);
     }
 })
 
-setGuard(false);
+guard.value = false;
 count2 = 0;
-setFirstName("Homer");
+firstName.value = "Homer";
 assert(count2 === 0, "Cleaned up dependecy from unused code path");
 
-setGuard(true);
+guard.value = true;
 assert(count2 === 10, "Reevaluate with when conditional signal changes");
 
 count2 = 0;
-setLastName("Simpson");
+lastName.value = "Simpson";
 assert(count2 === 0, "Cleaned up dependecy from unused code path");
 
 
 // This example of a setup with glitch-potential comes from https://stackoverflow.com/a/25141234
-const [a, setA] = createSignal(0);
-const [b, setB] = createSignal(0);
+const a = new Signal(0);
+const b = new Signal(0);
 
-const sum = createMemo(() => a() + b());
-const prod = createMemo(() => a() * b());
+const sum = new Effect(() => a.value + b.value);
+const prod = new Effect(() => a.value * b.value);
 
-createEffect(() => {
-    assert(sum() === a() + b(), "Sum consistent");
-    assert(prod() === a() * b(), "Product consistent");
+new Effect(() => {
+    assert(sum.value === a.value + b.value, "Sum consistent");
+    assert(prod.value === a.value * b.value, "Product consistent");
 });
 
-setA(1);
-setB(2);
+a.value = 1;
+b.value = 2;
 
 let caught = null;
 try {
-    createEffect(() => {
-        setA(sum());
+    new Effect(() => {
+        a.value = sum.value;
     });
 } catch (ex) {
     caught = ex;
 }
 
 assert(caught === null, "Dependecy loop prevented");
-let before = sum();
-setA(a());
-assert(sum() !== before, "Effect not broken by loop prevention");
+let before = sum.value;
+a.value = a.value;
+assert(sum.value !== before, "Effect not broken by loop prevention");
 
 report();

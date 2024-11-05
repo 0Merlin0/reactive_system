@@ -99,6 +99,55 @@ export class Effect extends Reactive {
     }
 }
 
+export class ReactiveObject {
+    constructor(base_object) {
+        const proxy = new Proxy(this, {
+            get(target, prop, receiver) {
+                if (!prop.startsWith("$") && target.hasOwnProperty(prop)) {
+                    return target[prop];
+                }
+                prop = prop.substring(1);
+                if (target.hasOwnProperty(prop)) {
+                    if (isReactive(target[prop])) {
+                        return target[prop].value;
+                    } else {
+                        return target[prop];
+                    }
+
+                } else {
+                    return undefined;
+                }
+
+            },
+            set(target, prop, value) {
+                if (!prop.startsWith("$")) {
+                    target[prop] = value;
+                    return true;
+                }
+                prop = prop.substring(1);
+                if (target.hasOwnProperty(prop)) {
+                    target[prop].value = value;
+                } else if (isReactive(value)) {
+                   target[prop] = value;
+                } else if (typeof value === "function") {
+                   target[prop] = new Effect(value);
+                } else {
+                   target[prop] = new Signal(value);
+                }
+                return true;
+            }
+
+        });
+        if (!!base_object) {
+            for (const prop in base_object) {
+                proxy[prop] = base_object[prop];
+            }
+        }
+        return proxy;
+    }
+}
+
+
 export function isReactive(entity) {
     return entity instanceof Reactive;
 }

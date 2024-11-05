@@ -13,3 +13,16 @@ var text2 = component_lib.text({ 'value': cell2, 'onchange': (event) => { cell2.
 var text3 = component_lib.text({ 'value': memo});
 
 component_lib.add_to_main(text1, ' + ', text2, ' = ' , text3);
+
+const log = new Signal(false);
+const button_text = new Effect( () => 'Log: ' + log.value);
+var button = component_lib.button({ 'textContent': button_text, 'onclick': (_) => { log.value = !log.value; }});
+
+component_lib.add_to_main('<br/>', button);
+
+
+new Effect( () => {
+    console.log("Log memo called");
+    if (log.value) {
+        component_lib.add_to_main('<br/>' + cell1.value + " + " + cell2.value + " = " + memo.value)
+}});

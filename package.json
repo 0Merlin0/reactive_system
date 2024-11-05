@@ -4,11 +4,15 @@
   "description": "Implementing a reactive system from scratch",
   "type": "module",
   "scripts": {
+      "example": "node node_modules/browser-sync/dist/bin.js start --server --no-online --no-ghost-mode --files src/ --startPath src/example",
       "task1": "node node_modules/browser-sync/dist/bin.js start --server --no-online --no-ghost-mode --files src/ --startPath src/task1",
       "test1": "node src/task1/test.js",
       "task2": "node node_modules/browser-sync/dist/bin.js start --server --no-online --no-ghost-mode --files src/ --startPath src/task2",
       "test2": "node src/task2/test.js",
-      "test3": "node src/task3/test.js"
+      "task3": "node node_modules/browser-sync/dist/bin.js start --server --no-online --no-ghost-mode --files src/ --startPath src/task3",
+      "test3": "node src/task3/test.js",
+      "task4": "node node_modules/browser-sync/dist/bin.js start --server --no-online --no-ghost-mode --files src/ --startPath src/task4",
+      "test4": "node src/task4/test.js"
   },
   "devDependencies": {
     "browser-sync": "^3.0.3"

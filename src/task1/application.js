@@ -1,15 +1,15 @@
-import { createSignal, createMemo, isReactive } from "../reactive_lib.js";
+import { Signal, Effect, isReactive } from "../reactive_lib.js";
 import { ComponentLib } from "../common/component_lib.js";
 
 const component_lib = new ComponentLib(isReactive);
 
-const [cell1, setCell1] = createSignal(1);
-const [cell2, setCell2] = createSignal(2);
+const cell1 = new Signal(1);
+const cell2 = new Signal(2);
 
-const memo = createMemo( () => cell1() + cell2());
+const memo = new Effect( () => cell1.value + cell2.value);
 
-var text1 = component_lib.text({ 'value': cell1, 'onchange': (event) => { setCell1(Number(event.target.value));}});
-var text2 = component_lib.text({ 'value': cell2, 'onchange': (event) => { setCell2(Number(event.target.value));}});
+var text1 = component_lib.text({ 'value': cell1, 'onchange': (event) => { cell1.value = Number(event.target.value);}});
+var text2 = component_lib.text({ 'value': cell2, 'onchange': (event) => { cell2.value = Number(event.target.value);}});
 var text3 = component_lib.text({ 'value': memo});
 var button = component_lib.button({ 'textContent': 'Update', 'onclick': (_) => { component_lib.update(text3); }});
 

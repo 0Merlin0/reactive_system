@@ -1,27 +1,50 @@
+export class Reactive {
+
+    constructor() {
+        this._cached_value = null;
+    }
+
+    get_value() {
+        return this._cached_value;
+    }
+
+    compute_value() {}
+}
+
+export class Signal extends Reactive {
+
+    constructor(defaultValue) {
+        super();
+        this._cached_value = defaultValue;
+    }
+
+    get value() {
+        return this.get_value();
+    }
+
+    set value(newValue) {
+        this._cached_value = newValue;
+    }
+}
+
+export class Effect extends Reactive {
+
+    constructor(effect_function) {
+        super();
+        this.effect_function = effect_function;
+        this.compute_value();
+    }
+
+    compute_value() {
+        this._cached_value = this.effect_function();
+    }
+
+    get value() {
+        this.compute_value();
+        return this.get_value();
+    }
+}
+
 export function isReactive(entity) {
-    return entity.reactive;
-}
-
-export function createSignal(initialValue) {
-    let value = initialValue;
-    const read = () => {
-        return value;
-    };
-    const write = (nextValue) => {
-        value = nextValue;
-    }
-    read.reactive = true;
-    write.reactive = true;
-    return [read, write];
-}
-
-export function createMemo(func) {
-
-    const execute = () => {
-        return func();
-    }
-
-    execute.reactive = true;
-
-    return execute;
+    return entity instanceof Reactive;
 }
